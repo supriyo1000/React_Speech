@@ -1,93 +1,211 @@
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { useState } from "react";
+// import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+// import { useState } from "react";
 
-const interviewQuestions = [
-  "Tell me about yourself.",
-  "Why do you want to work for our company?",
-  "What are your strengths and weaknesses?",
-  "Where do you see yourself in five years?",
-  "Why should we hire you?",
-];
+// const interviewQuestions = [
+//   "Tell me about yourself.",
+//   "Why do you want to work for our company?",
+//   "What are your strengths and weaknesses?",
+//   "Where do you see yourself in five years?",
+//   "Why should we hire you?",
+// ];
+
+// export default function App() {
+//   const [textToCopy, setTextToCopy] = useState("");
+//   const [questionIndex, setQuestionIndex] = useState(0);
+//   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+
+//   if (!browserSupportsSpeechRecognition) {
+//     return <p className="text-red-600 text-center mt-10">Your browser doesn't support speech recognition.</p>;
+//   }
+
+//   const startListening = () => {
+//     resetTranscript();
+//     SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
+//   };
+
+//   const stopListening = () => {
+//     SpeechRecognition.stopListening();
+//   };
+
+//   const speakText = (text) => {
+//     console.log("Speaking:", text);
+    
+//     const utterance = new SpeechSynthesisUtterance(text);
+//     utterance.lang = "en-IN";
+//     utterance.rate = 0.8; // slower for clarity
+//     utterance.pitch = 1;
+//     utterance.volume = 1;
+//     window.speechSynthesis.speak(utterance);
+//   };
+
+//   const askNextQuestion = () => {
+//     stopListening();
+//     resetTranscript();
+//     const nextIndex = (questionIndex + 1) % interviewQuestions.length;
+//     setQuestionIndex(nextIndex);
+//     speakText(interviewQuestions[nextIndex]);
+//     setTimeout(() => startListening(), 3000);
+//   };
+
+//   return (
+//     <div className="min-h-screen w-full flex justify-center bg-gray-100 py-8 px-4">
+//       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 space-y-6">
+//         <h1 className="text-3xl font-bold text-center text-gray-800">🎤 English Speaking Practice</h1>
+//         <p className="text-center text-gray-500">Simulate job interview questions and practice your spoken English</p>
+
+//         <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+//           <p className="text-sm text-gray-500 mb-1">🗨️ Current Question:</p>
+//           <p className="text-lg font-semibold text-gray-800">{interviewQuestions[questionIndex]}</p>
+//         </div>
+
+//         <div
+//           className="bg-white border border-gray-300 p-4 min-h-[100px] rounded-lg text-gray-700 cursor-pointer"
+//           onClick={() => setTextToCopy(transcript)}
+//         >
+//           {transcript || "🎙️ Your spoken answer will appear here..."}
+//         </div>
+
+//         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+//           <button onClick={startListening} className="btn">Start Listening</button>
+//           <button onClick={stopListening} className="btn-outline">Stop</button>
+//           <button onClick={() => speakText(transcript)} className="btn">Repeat My Answer</button>
+//           <button onClick={askNextQuestion} className="btn">Next Question</button>
+//           <button onClick={() => navigator.clipboard.writeText(textToCopy)} className="btn-outline">Copy</button>
+//           <button onClick={() => navigator.clipboard.readText().then(setTextToCopy)} className="btn-outline">Paste</button>
+//           <button onClick={() => setTextToCopy("")} className="btn-danger col-span-2 sm:col-span-1">Clear</button>
+//         </div>
+//       </div>
+
+//       {/* Tailwind button styles */}
+//       <style>{`
+//         .btn {
+//           @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition;
+//         }
+//         .btn-outline {
+//           @apply px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition;
+//         }
+//         .btn-danger {
+//           @apply px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// }
+
+
+
+
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import { useState, useEffect, useRef } from "react";
 
 export default function App() {
-  const [textToCopy, setTextToCopy] = useState("");
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  const [aiReply, setAiReply] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const silenceTimer = useRef(null);
+
+  const {
+    transcript,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
 
   if (!browserSupportsSpeechRecognition) {
-    return <p className="text-red-600 text-center mt-10">Your browser doesn't support speech recognition.</p>;
+    return (
+      <p className="text-red-600 text-center mt-10">
+        Your browser doesn't support speech recognition.
+      </p>
+    );
   }
 
-  const startListening = () => {
-    resetTranscript();
-    SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
-  };
-
-  const stopListening = () => {
-    SpeechRecognition.stopListening();
-  };
-
   const speakText = (text) => {
-    console.log("Speaking:", text);
-    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-IN";
-    utterance.rate = 0.8; // slower for clarity
-    utterance.pitch = 1;
-    utterance.volume = 1;
+    utterance.rate = 0.8;
     window.speechSynthesis.speak(utterance);
   };
 
-  const askNextQuestion = () => {
-    stopListening();
-    resetTranscript();
-    const nextIndex = (questionIndex + 1) % interviewQuestions.length;
-    setQuestionIndex(nextIndex);
-    speakText(interviewQuestions[nextIndex]);
-    setTimeout(() => startListening(), 3000);
+  const askAI = async (message) => {
+    try {
+      const res = await fetch("http://localhost:8000/api/ai-response/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_message: message }),
+      });
+      const data = await res.json();
+      setAiReply(data.reply);
+      speakText(data.reply);
+    } catch (error) {
+      setAiReply("Failed to get AI response.");
+    }
   };
+
+  const handleSilenceTimeout = () => {
+    SpeechRecognition.stopListening();
+    setIsListening(false);
+    const message = transcript.trim();
+    if (message) {
+      askAI(message);
+    }
+  };
+
+  const resetSilenceTimer = () => {
+    clearTimeout(silenceTimer.current);
+    silenceTimer.current = setTimeout(handleSilenceTimeout, 5000);
+  };
+
+  const startListening = () => {
+    setAiReply("");
+    resetTranscript();
+    setIsListening(true);
+    SpeechRecognition.startListening({ continuous: true, language: "en-IN" });
+    resetSilenceTimer();
+  };
+
+  useEffect(() => {
+    if (isListening) {
+      resetSilenceTimer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript]);
 
   return (
     <div className="min-h-screen w-full flex justify-center bg-gray-100 py-8 px-4">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 space-y-6">
-        <h1 className="text-3xl font-bold text-center text-gray-800">🎤 English Speaking Practice</h1>
-        <p className="text-center text-gray-500">Simulate job interview questions and practice your spoken English</p>
+      <div className="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-6 space-y-6">
+        <h1 className="text-3xl font-bold text-center text-gray-800">
+          🎤 Speak to AI Tutor
+        </h1>
 
-        <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-          <p className="text-sm text-gray-500 mb-1">🗨️ Current Question:</p>
-          <p className="text-lg font-semibold text-gray-800">{interviewQuestions[questionIndex]}</p>
+        <div className="border p-4 rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-500 mb-1">🎙️ You said:</p>
+          <p className="text-gray-800">{transcript || "Waiting for speech..."}</p>
         </div>
 
-        <div
-          className="bg-white border border-gray-300 p-4 min-h-[100px] rounded-lg text-gray-700 cursor-pointer"
-          onClick={() => setTextToCopy(transcript)}
-        >
-          {transcript || "🎙️ Your spoken answer will appear here..."}
+        <div className="border p-4 rounded-lg bg-white min-h-[80px]">
+          <p className="text-sm text-gray-500 mb-1">🤖 AI Response:</p>
+          <p className="text-gray-800">{aiReply || "AI response will appear here."}</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-          <button onClick={startListening} className="btn">Start Listening</button>
-          <button onClick={stopListening} className="btn-outline">Stop</button>
-          <button onClick={() => speakText(transcript)} className="btn">Repeat My Answer</button>
-          <button onClick={askNextQuestion} className="btn">Next Question</button>
-          <button onClick={() => navigator.clipboard.writeText(textToCopy)} className="btn-outline">Copy</button>
-          <button onClick={() => navigator.clipboard.readText().then(setTextToCopy)} className="btn-outline">Paste</button>
-          <button onClick={() => setTextToCopy("")} className="btn-danger col-span-2 sm:col-span-1">Clear</button>
+        <div className="text-center">
+          <button onClick={startListening} className="btn">
+            🎤 Speak
+          </button>
         </div>
       </div>
 
-      {/* Tailwind button styles */}
       <style>{`
         .btn {
-          @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition;
+          padding: 0.75rem 1.5rem;
+          background-color: #2563eb;
+          color: white;
+          border-radius: 0.5rem;
+          font-weight: 600;
+          transition: background-color 0.3s ease;
         }
-        .btn-outline {
-          @apply px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition;
-        }
-        .btn-danger {
-          @apply px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition;
+        .btn:hover {
+          background-color: #1d4ed8;
         }
       `}</style>
     </div>
   );
 }
+
